@@ -118,8 +118,6 @@ const App = () => {
     localStorage.removeItem('bakso_session');
   };
 
-  const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
-
   const filteredProducts = useMemo(() => products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) && (selectedCategory === 'Semua' || p.category === selectedCategory)), [products, searchTerm, selectedCategory]);
   const cartSubtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const discountAmount = selectedPromo ? (selectedPromo.type === 'percentage' ? (cartSubtotal * selectedPromo.value / 100) : selectedPromo.value) : 0;
@@ -337,6 +335,7 @@ const App = () => {
             </div>
           )}
 
+          {/* DASHBOARD VIEW (Responsive) */}
           {view === 'dashboard' && (
             <div className="p-4 md:p-8 space-y-6 md:space-y-8 animate-in fade-in">
               <div><h2 className="text-2xl font-bold">Dashboard</h2><p className="text-slate-500 text-sm">Ringkasan performa</p></div>
