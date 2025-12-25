@@ -1,0 +1,2 @@
+# bakso
+Aplikasi Kasir Digital
