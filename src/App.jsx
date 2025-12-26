@@ -3,7 +3,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Users, Tag, Settings, LogOut, Plus, 
   Trash2, Printer, ChevronRight, CheckCircle2, X, Search, Store, Lock, 
   ShieldCheck, Ticket, Edit, Menu, ChevronLeft, CreditCard, Wallet,
-  ArrowUpRight, DollarSign, ShoppingBag, Clock, Calendar
+  ArrowUpRight, DollarSign, ShoppingBag
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
 // --- KONFIGURASI FIREBASE ---
@@ -93,8 +93,12 @@ const App = () => {
     return onAuthStateChanged(auth, (u) => {
       if (u) {
         setUser(u);
-        const session = JSON.parse(localStorage.getItem('bakso_session'));
-        if (session) { setRole(session.role); setCurrentUserData(session.user); setIsAuthenticated(true); }
+        try {
+          const session = JSON.parse(localStorage.getItem('bakso_session'));
+          if (session) { setRole(session.role); setCurrentUserData(session.user); setIsAuthenticated(true); }
+        } catch (e) {
+          localStorage.removeItem('bakso_session');
+        }
       }
       setLoading(false);
     });
@@ -127,10 +131,8 @@ const App = () => {
     localStorage.removeItem('bakso_session');
   };
 
-  // Filter Produk dengan Safety Check (Fix Blank Screen)
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
-      // Pastikan p.name ada sebelum di-lowercase untuk mencegah crash
       const nameMatch = (p.name || '').toLowerCase().includes(searchTerm.toLowerCase());
       const catMatch = selectedCategory === 'Semua' || p.category === selectedCategory;
       return nameMatch && catMatch;
