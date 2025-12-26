@@ -6,6 +6,7 @@ import {
   ArrowUpRight, DollarSign, ShoppingBag
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
+import { getAnalytics } from "firebase/analytics";
 import { 
   getFirestore, collection, doc, setDoc, onSnapshot, addDoc, updateDoc, deleteDoc
 } from 'firebase/firestore';
@@ -13,6 +14,43 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+
+// --- ERROR BOUNDARY ---
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-screen bg-red-50 p-6 text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-2">Terjadi Kesalahan</h1>
+          <p className="text-slate-600 mb-4">Aplikasi mengalami kendala teknis.</p>
+          <pre className="bg-white p-4 rounded-lg shadow text-xs text-left overflow-auto max-w-lg mb-6 border border-red-100">
+            {this.state.error?.toString()}
+          </pre>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all"
+          >
+            Muat Ulang Aplikasi
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // --- KONFIGURASI FIREBASE ---
 const firebaseConfig = {
@@ -25,10 +63,16 @@ const firebaseConfig = {
   measurementId: "G-W73TPXCD8H"
 };
 
-// Inisialisasi Firebase (Tanpa Analytics untuk stabilitas)
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+// Inisialisasi Firebase
+let app, db, auth;
+try {
+  app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  auth = getAuth(app);
+} catch (e) {
+  console.error("Firebase Init Error:", e);
+}
+const analytics = typeof window !== "undefined" && app ? getAnalytics(app) : null;
 
 // --- DATABASE PATHS ---
 const APP_ROOT = "pos_bakso_v1";
@@ -36,7 +80,7 @@ const getColl = (name) => collection(db, APP_ROOT, 'data', name);
 const getSettingDoc = () => doc(db, APP_ROOT, 'settings', 'config', 'admin_pin');
 const CATEGORIES = ['Semua', 'Bakso', 'Mie', 'Minuman', 'Tambahan'];
 
-// --- UTILS & HELPER COMPONENTS (DEFINISI DI ATAS) ---
+// --- UTILS ---
 const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
 
 const COLORS = {
@@ -46,11 +90,11 @@ const COLORS = {
   purple: { bg: 'bg-purple-50', text: 'text-purple-600', trendBg: 'bg-purple-100' },
 };
 
-// Component Helper: StatCard
+// --- COMPONENTS ---
 const StatCard = ({ title, value, icon, color, trend }) => {
-  const theme = COLORS[color] || COLORS.blue; // Fallback ke blue jika color tidak valid
+  const theme = COLORS[color] || COLORS.blue;
   return (
-    <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+    <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-lg transition-all group relative overflow-hidden">
       <div className={`absolute top-0 right-0 w-24 h-24 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-500 ${theme.bg}`}></div>
       <div className="relative z-10">
         <div className="flex justify-between items-start mb-4">
@@ -64,7 +108,6 @@ const StatCard = ({ title, value, icon, color, trend }) => {
   );
 };
 
-// Component Helper: NavButton
 const NavButton = ({ icon, label, active, onClick, expanded }) => (
   <button onClick={onClick} className={`w-full flex items-center gap-3 p-3.5 rounded-2xl transition-all duration-200 group ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'hover:bg-slate-50 text-slate-500 hover:text-blue-600'}`}>
     <div className={`${active ? 'text-white' : 'group-hover:scale-110 transition-transform'}`}>{icon}</div>
@@ -72,7 +115,6 @@ const NavButton = ({ icon, label, active, onClick, expanded }) => (
   </button>
 );
 
-// --- MAIN APP COMPONENT ---
 const App = () => {
   // Auth & User State
   const [user, setUser] = useState(null);
@@ -113,7 +155,7 @@ const App = () => {
 
   // --- EFFECTS ---
   useEffect(() => {
-    const initAuth = async () => { try { await signInAnonymously(auth); } catch (err) { console.error(err); } };
+    const initAuth = async () => { try { await signInAnonymously(auth); } catch (err) { console.error("Auth Error:", err); } };
     initAuth();
     return onAuthStateChanged(auth, (u) => {
       if (u) {
@@ -121,9 +163,7 @@ const App = () => {
         try {
           const session = JSON.parse(localStorage.getItem('bakso_session'));
           if (session) { setRole(session.role); setCurrentUserData(session.user); setIsAuthenticated(true); }
-        } catch (e) {
-          localStorage.removeItem('bakso_session');
-        }
+        } catch (e) { localStorage.removeItem('bakso_session'); }
       }
       setLoading(false);
     });
@@ -156,14 +196,7 @@ const App = () => {
     localStorage.removeItem('bakso_session');
   };
 
-  const filteredProducts = useMemo(() => {
-    return products.filter(p => {
-      const nameMatch = (p.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-      const catMatch = selectedCategory === 'Semua' || p.category === selectedCategory;
-      return nameMatch && catMatch;
-    });
-  }, [products, searchTerm, selectedCategory]);
-
+  const filteredProducts = useMemo(() => products.filter(p => (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) && (selectedCategory === 'Semua' || p.category === selectedCategory)), [products, searchTerm, selectedCategory]);
   const cartSubtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const discountAmount = selectedPromo ? (selectedPromo.type === 'percentage' ? (cartSubtotal * selectedPromo.value / 100) : selectedPromo.value) : 0;
   const cartTotal = Math.max(0, cartSubtotal - discountAmount);
@@ -563,8 +596,17 @@ const App = () => {
         
         {showSettingsModal && <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm"><div className="bg-white rounded-[2rem] w-full max-w-sm p-8 animate-in zoom-in-95"><h3 className="text-xl font-bold text-slate-900 mb-6">Keamanan Admin</h3><form onSubmit={async (e) => { e.preventDefault(); const fd = new FormData(e.target); if(fd.get('old') !== adminConfig.pin) return alert('PIN Lama Salah'); await updateDoc(getSettingDoc(), { pin: fd.get('new') }); alert('Berhasil'); setShowSettingsModal(false); }} className="space-y-4"><input name="old" type="password" placeholder="PIN Lama" className="w-full p-4 bg-slate-50 border rounded-2xl text-sm text-center tracking-widest font-mono outline-none" /><input name="new" type="password" placeholder="PIN Baru (4 Angka)" className="w-full p-4 bg-slate-50 border rounded-2xl text-sm text-center tracking-widest font-mono outline-none" /><div className="flex gap-3 pt-2"><button type="button" onClick={() => setShowSettingsModal(false)} className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold text-sm hover:bg-slate-200">Batal</button><button type="submit" className="flex-[2] py-4 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-black shadow-lg">Simpan PIN</button></div></form></div></div>}
       </div>
-    </div>
+    </Wrapper>
   );
 };
 
-export default App;
+// Wrapper Component for Error Boundary
+const Wrapper = ({ children }) => (
+  <ErrorBoundary>{children}</ErrorBoundary>
+);
+
+export default () => (
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
