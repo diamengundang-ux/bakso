@@ -38,7 +38,15 @@ const getSettingDoc = () => doc(db, APP_ROOT, 'settings', 'config', 'admin_pin')
 const CATEGORIES = ['Semua', 'Bakso', 'Mie', 'Minuman', 'Tambahan'];
 
 // --- UTILS ---
-const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
+
+// Helper Warna Stat Card untuk Tailwind
+const COLORS = {
+  green: { bg: 'bg-green-50', text: 'text-green-600', trendBg: 'bg-green-100' },
+  blue: { bg: 'bg-blue-50', text: 'text-blue-600', trendBg: 'bg-blue-100' },
+  orange: { bg: 'bg-orange-50', text: 'text-orange-600', trendBg: 'bg-orange-100' },
+  purple: { bg: 'bg-purple-50', text: 'text-purple-600', trendBg: 'bg-purple-100' },
+};
 
 const App = () => {
   // Auth & User State
@@ -50,9 +58,9 @@ const App = () => {
   // UI State
   const [view, setView] = useState('pos');
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true); // Desktop Toggle
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Mobile Toggle
-  const [showMobileCart, setShowMobileCart] = useState(false); // Mobile Cart Toggle
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showMobileCart, setShowMobileCart] = useState(false);
   
   // Data State
   const [products, setProducts] = useState([]);
@@ -119,7 +127,16 @@ const App = () => {
     localStorage.removeItem('bakso_session');
   };
 
-  const filteredProducts = useMemo(() => products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) && (selectedCategory === 'Semua' || p.category === selectedCategory)), [products, searchTerm, selectedCategory]);
+  // Filter Produk dengan Safety Check (Fix Blank Screen)
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      // Pastikan p.name ada sebelum di-lowercase untuk mencegah crash
+      const nameMatch = (p.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const catMatch = selectedCategory === 'Semua' || p.category === selectedCategory;
+      return nameMatch && catMatch;
+    });
+  }, [products, searchTerm, selectedCategory]);
+
   const cartSubtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const discountAmount = selectedPromo ? (selectedPromo.type === 'percentage' ? (cartSubtotal * selectedPromo.value / 100) : selectedPromo.value) : 0;
   const cartTotal = Math.max(0, cartSubtotal - discountAmount);
@@ -179,7 +196,7 @@ const App = () => {
         <div className="fixed inset-0 bg-black/20 z-40 md:hidden backdrop-blur-sm transition-all" onClick={() => setMobileMenuOpen(false)}></div>
       )}
 
-      {/* SIDEBAR (Modern Style) */}
+      {/* SIDEBAR */}
       <div className={`
         fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out
         md:relative md:translate-x-0
@@ -255,7 +272,7 @@ const App = () => {
                           {p.stock <= 0 && <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center text-white font-bold uppercase text-xs backdrop-blur-[1px]">Habis</div>}
                         </div>
                         <div className="flex-1 flex flex-col">
-                          <h5 className="font-bold text-sm text-slate-800 line-clamp-1 mb-1">{p.name}</h5>
+                          <h5 className="font-bold text-sm text-slate-800 line-clamp-1 mb-1">{p.name || 'Produk Tanpa Nama'}</h5>
                           <div className="mt-auto flex justify-between items-center">
                             <p className="text-blue-600 font-bold text-sm">{formatCurrency(p.price)}</p>
                             <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors"><Plus size={16} /></div>
@@ -384,10 +401,10 @@ const App = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Total Pendapatan" value={formatCurrency(sales.reduce((a,s)=>a+s.total,0))} icon={<DollarSign size={20} className="text-green-600"/>} trend="+12.5%" color="green" />
-                <StatCard title="Total Transaksi" value={sales.length} icon={<ShoppingBag size={20} className="text-blue-600"/>} trend="+5.2%" color="blue" />
-                <StatCard title="Menu Terjual" value={sales.reduce((a,s)=>a+s.items.length,0)} icon={<Package size={20} className="text-orange-600"/>} trend="-2.1%" color="orange" />
-                <StatCard title="Rata-rata Order" value={formatCurrency(sales.length > 0 ? sales.reduce((a,s)=>a+s.total,0)/sales.length : 0)} icon={<CreditCard size={20} className="text-purple-600"/>} trend="+0.8%" color="purple" />
+                <StatCard title="Total Pendapatan" value={formatCurrency(sales.reduce((a,s)=>a+s.total,0))} icon={<DollarSign size={20} className={COLORS.green.text}/>} trend="+12.5%" color="green" />
+                <StatCard title="Total Transaksi" value={sales.length} icon={<ShoppingBag size={20} className={COLORS.blue.text}/>} trend="+5.2%" color="blue" />
+                <StatCard title="Menu Terjual" value={sales.reduce((a,s)=>a+s.items.length,0)} icon={<Package size={20} className={COLORS.orange.text}/>} trend="-2.1%" color="orange" />
+                <StatCard title="Rata-rata Order" value={formatCurrency(sales.length > 0 ? sales.reduce((a,s)=>a+s.total,0)/sales.length : 0)} icon={<CreditCard size={20} className={COLORS.purple.text}/>} trend="+0.8%" color="purple" />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -534,11 +551,11 @@ const NavButton = ({ icon, label, active, onClick, expanded }) => (
 // Component Helper untuk Card Statistik
 const StatCard = ({ title, value, icon, color, trend }) => (
   <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
-    <div className={`absolute top-0 right-0 w-24 h-24 bg-${color}-50 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-500`}></div>
+    <div className={`absolute top-0 right-0 w-24 h-24 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-500 ${COLORS[color].bg}`}></div>
     <div className="relative z-10">
       <div className="flex justify-between items-start mb-4">
-        <div className={`p-3 rounded-2xl bg-${color}-50 text-${color}-600`}>{icon}</div>
-        <div className="flex items-center gap-1 bg-green-50 px-2 py-1 rounded-lg"><ArrowUpRight size={12} className="text-green-600"/><span className="text-[10px] font-bold text-green-600">{trend}</span></div>
+        <div className={`p-3 rounded-2xl ${COLORS[color].bg} ${COLORS[color].text}`}>{icon}</div>
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${COLORS[color].trendBg}`}><ArrowUpRight size={12} className={COLORS[color].text}/><span className={`text-[10px] font-bold ${COLORS[color].text}`}>{trend}</span></div>
       </div>
       <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">{title}</p>
       <h3 className="text-2xl font-black text-slate-900 tracking-tight">{value}</h3>
