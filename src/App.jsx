@@ -6,7 +6,6 @@ import {
   ArrowUpRight, DollarSign, ShoppingBag
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
-import { getAnalytics } from "firebase/analytics";
 import { 
   getFirestore, collection, doc, setDoc, onSnapshot, addDoc, updateDoc, deleteDoc
 } from 'firebase/firestore';
@@ -26,10 +25,10 @@ const firebaseConfig = {
   measurementId: "G-W73TPXCD8H"
 };
 
+// Inisialisasi Firebase (Tanpa Analytics untuk stabilitas)
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
 
 // --- DATABASE PATHS ---
 const APP_ROOT = "pos_bakso_v1";
@@ -37,10 +36,9 @@ const getColl = (name) => collection(db, APP_ROOT, 'data', name);
 const getSettingDoc = () => doc(db, APP_ROOT, 'settings', 'config', 'admin_pin');
 const CATEGORIES = ['Semua', 'Bakso', 'Mie', 'Minuman', 'Tambahan'];
 
-// --- UTILS ---
+// --- UTILS & HELPER COMPONENTS (DEFINISI DI ATAS) ---
 const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
 
-// Helper Warna Stat Card untuk Tailwind
 const COLORS = {
   green: { bg: 'bg-green-50', text: 'text-green-600', trendBg: 'bg-green-100' },
   blue: { bg: 'bg-blue-50', text: 'text-blue-600', trendBg: 'bg-blue-100' },
@@ -48,6 +46,33 @@ const COLORS = {
   purple: { bg: 'bg-purple-50', text: 'text-purple-600', trendBg: 'bg-purple-100' },
 };
 
+// Component Helper: StatCard
+const StatCard = ({ title, value, icon, color, trend }) => {
+  const theme = COLORS[color] || COLORS.blue; // Fallback ke blue jika color tidak valid
+  return (
+    <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+      <div className={`absolute top-0 right-0 w-24 h-24 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-500 ${theme.bg}`}></div>
+      <div className="relative z-10">
+        <div className="flex justify-between items-start mb-4">
+          <div className={`p-3 rounded-2xl ${theme.bg} ${theme.text}`}>{icon}</div>
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${theme.trendBg}`}><ArrowUpRight size={12} className={theme.text}/><span className={`text-[10px] font-bold ${theme.text}`}>{trend}</span></div>
+        </div>
+        <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">{title}</p>
+        <h3 className="text-2xl font-black text-slate-900 tracking-tight">{value}</h3>
+      </div>
+    </div>
+  );
+};
+
+// Component Helper: NavButton
+const NavButton = ({ icon, label, active, onClick, expanded }) => (
+  <button onClick={onClick} className={`w-full flex items-center gap-3 p-3.5 rounded-2xl transition-all duration-200 group ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'hover:bg-slate-50 text-slate-500 hover:text-blue-600'}`}>
+    <div className={`${active ? 'text-white' : 'group-hover:scale-110 transition-transform'}`}>{icon}</div>
+    {expanded && <span className="font-bold text-sm animate-in fade-in slide-in-from-left-2 duration-200">{label}</span>}
+  </button>
+);
+
+// --- MAIN APP COMPONENT ---
 const App = () => {
   // Auth & User State
   const [user, setUser] = useState(null);
@@ -541,28 +566,5 @@ const App = () => {
     </div>
   );
 };
-
-// Component Helper untuk Navigasi Sidebar
-const NavButton = ({ icon, label, active, onClick, expanded }) => (
-  <button onClick={onClick} className={`w-full flex items-center gap-3 p-3.5 rounded-2xl transition-all duration-200 group ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'hover:bg-slate-50 text-slate-500 hover:text-blue-600'}`}>
-    <div className={`${active ? 'text-white' : 'group-hover:scale-110 transition-transform'}`}>{icon}</div>
-    {expanded && <span className="font-bold text-sm animate-in fade-in slide-in-from-left-2 duration-200">{label}</span>}
-  </button>
-);
-
-// Component Helper untuk Card Statistik
-const StatCard = ({ title, value, icon, color, trend }) => (
-  <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
-    <div className={`absolute top-0 right-0 w-24 h-24 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-500 ${COLORS[color].bg}`}></div>
-    <div className="relative z-10">
-      <div className="flex justify-between items-start mb-4">
-        <div className={`p-3 rounded-2xl ${COLORS[color].bg} ${COLORS[color].text}`}>{icon}</div>
-        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${COLORS[color].trendBg}`}><ArrowUpRight size={12} className={COLORS[color].text}/><span className={`text-[10px] font-bold ${COLORS[color].text}`}>{trend}</span></div>
-      </div>
-      <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">{title}</p>
-      <h3 className="text-2xl font-black text-slate-900 tracking-tight">{value}</h3>
-    </div>
-  </div>
-);
 
 export default App;
