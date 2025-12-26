@@ -596,7 +596,7 @@ const App = () => {
         
         {showSettingsModal && <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm"><div className="bg-white rounded-[2rem] w-full max-w-sm p-8 animate-in zoom-in-95"><h3 className="text-xl font-bold text-slate-900 mb-6">Keamanan Admin</h3><form onSubmit={async (e) => { e.preventDefault(); const fd = new FormData(e.target); if(fd.get('old') !== adminConfig.pin) return alert('PIN Lama Salah'); await updateDoc(getSettingDoc(), { pin: fd.get('new') }); alert('Berhasil'); setShowSettingsModal(false); }} className="space-y-4"><input name="old" type="password" placeholder="PIN Lama" className="w-full p-4 bg-slate-50 border rounded-2xl text-sm text-center tracking-widest font-mono outline-none" /><input name="new" type="password" placeholder="PIN Baru (4 Angka)" className="w-full p-4 bg-slate-50 border rounded-2xl text-sm text-center tracking-widest font-mono outline-none" /><div className="flex gap-3 pt-2"><button type="button" onClick={() => setShowSettingsModal(false)} className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold text-sm hover:bg-slate-200">Batal</button><button type="submit" className="flex-[2] py-4 bg-slate-900 text-white rounded-2xl font-bold text-sm hover:bg-black shadow-lg">Simpan PIN</button></div></form></div></div>}
       </div>
-    </Wrapper>
+    </div>
   );
 };
 
