@@ -3,7 +3,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Users, Tag, Settings, LogOut, Plus, 
   Trash2, Printer, ChevronRight, CheckCircle2, X, Search, Store, Lock, 
   ShieldCheck, Ticket, Edit, Menu, ChevronLeft, CreditCard, Wallet,
-  ArrowUpRight, DollarSign, ShoppingBag
+  ArrowUpRight, DollarSign, ShoppingBag, Minus
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from "firebase/analytics";
@@ -36,9 +36,6 @@ class ErrorBoundary extends React.Component {
         <div className="flex flex-col items-center justify-center h-screen bg-red-50 p-6 text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-2">Terjadi Kesalahan</h1>
           <p className="text-slate-600 mb-4">Aplikasi mengalami kendala teknis.</p>
-          <pre className="bg-white p-4 rounded-lg shadow text-xs text-left overflow-auto max-w-lg mb-6 border border-red-100">
-            {this.state.error?.toString()}
-          </pre>
           <button 
             onClick={() => window.location.reload()} 
             className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-black transition-all"
