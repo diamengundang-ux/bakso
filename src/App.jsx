@@ -288,7 +288,7 @@ const App = () => {
         <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-6 md:px-8 shrink-0 z-10 sticky top-0">
           <div className="flex items-center gap-4">
             <button onClick={() => setMobileMenuOpen(true)} className="p-2.5 -ml-3 text-gray-500 md:hidden hover:bg-gray-100 rounded-xl"><Menu size={24} /></button>
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="hidden md:block p-2 text-gray-400 hover:bg-gray-100 rounded-xl hover:text-gray-800 transition-all"><ChevronRight size={20} className={`transform ${sidebarOpen ? 'rotate-180' : ''}`} /></button>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="hidden md:block p-2 text-gray-400 hover:bg-gray-100 rounded-xl hover:text-gray-800 transition-all"><ChevronRight size={20} className={`transition-transform ${sidebarOpen ? 'rotate-180' : ''}`} /></button>
             <h2 className="font-bold text-xl text-gray-800 capitalize tracking-tight hidden sm:block">{view === 'pos' ? 'Menu Pemesanan' : view}</h2>
           </div>
           <div className="flex items-center gap-4">
@@ -383,7 +383,7 @@ const App = () => {
                     <div className="flex justify-between text-lg font-black text-gray-900"><span>Total Tagihan</span><span className="text-orange-600">{formatCurrency(cartTotal)}</span></div>
                   </div>
                   <div className="grid grid-cols-1 gap-3">
-                    <button onClick={() => setShowPromoModal(true)} className="w-full py-3 border-2 border-dashed border-gray-300 text-gray-500 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50 transition-all">{selectedPromo ? <><Ticket size={16} className="text-green-500"/> {selectedPromo.code}</> : <><Ticket size={16}/> Gunakan Promo / Kupon</>}</button>
+                    <button onClick={() => setShowPromoModal(true)} className="w-full py-3 border border-slate-200 text-slate-600 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50 transition-all">{selectedPromo ? <><Ticket size={16} className="text-green-500"/> {selectedPromo.code}</> : <><Ticket size={16}/> Gunakan Promo / Kupon</>}</button>
                     <button disabled={cart.length === 0} onClick={() => setShowCheckoutModal(true)} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold shadow-xl hover:bg-black transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">Proses Pembayaran <ChevronRight size={18}/></button>
                   </div>
                 </div>
@@ -549,7 +549,7 @@ const App = () => {
                 else await addDoc(getColl('products'), data);
                 setShowProductModal(false);
               }} className="space-y-5">
-                <div className="space-y-2"><label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Nama Produk</label><input name="name" defaultValue={editingItem?.name} required className="w-full p-4 bg-gray-50 border rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all" placeholder="Contoh: Bakso Urat" /></div>
+                <div className="space-y-2"><label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Nama Produk</label><input name="name" defaultValue={editingItem?.name} required className="w-full p-4 bg-gray-50 border rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="Contoh: Bakso Urat" /></div>
                 <div className="grid grid-cols-2 gap-5">
                   <div className="space-y-2"><label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Harga</label><input name="price" defaultValue={editingItem?.price} type="number" required className="w-full p-4 bg-gray-50 border rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all" /></div>
                   <div className="space-y-2"><label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Stok</label><input name="stock" defaultValue={editingItem?.stock} type="number" required className="w-full p-4 bg-gray-50 border rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all" /></div>
